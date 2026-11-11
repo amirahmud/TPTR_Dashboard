@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Monitoring Progres</title>
+    <!-- Menggunakan Chart.js untuk Grafik -->
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
+        .chart-box { position: relative; margin: auto; height: 400px; width: 100%; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Dashboard Real-Time Google Sheets</h1>
+    <div class="chart-box">
+        <canvas id="myChart"></canvas>
+    </div>
+</div>
+
+<script>
+// Gantilah URL di bawah ini dengan URL "Publish to Web (CSV)" dari Google Sheets Anda
+const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEu7K08RtD83BA1bC9YIbm30YNRtNpzLURRZwUBDtzaiuxXqoToAnYDnfuJTbEyvngHlFd7A9JS_Gp/pub?gid=1498112286&single=true&output=csv';
+
+// Fungsi untuk mengubah teks CSV menjadi Array Javascript
+function parseCSV(text) {
+    const lines = text.split('\n');
+    const labels = [];
+    const values = [];
+    
+    // Mulai dari indeks 1 untuk melewati baris header (Kategori, Jumlah)
+    for (let i = 1; i < lines.length; i++) {
+        if (lines[i].trim() === '') continue;
+        const columns = lines[i].split(',');
+        labels.push(columns[0]); // Kolom A
+        values.push(parseFloat(columns[1])); // Kolom B
+    }
+    return { labels, values };
+}
+
+// Fungsi utama untuk mengambil data dan menggambar grafik
+async function initDashboard() {
+    try {
+        const response = await fetch(spreadsheetUrl);
+        const dataText = await response.text();
+        const parsedData = parseCSV(dataText);
+
+        const ctx = document.getElementById('myChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar', // Anda bisa mengubah tipe grafik: 'line', 'pie', 'doughnut'
+            data: {
+                labels: parsedData.labels,
+                datasets: [{
+                    label: 'Progres / Jumlah',
+                    data: parsedData.values,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Gagal mengambil data dari Google Sheets:', error);
+    }
+}
+
+// Jalankan dashboard saat halaman dibuka
+initDashboard();
+</script>
+
+</body>
+</html>
